@@ -1,10 +1,8 @@
 import os
 import time
-import random
 import requests
-import subprocess
+
 from playwright.sync_api import sync_playwright
-subprocess.run(["playwright", "install", "chromium"])
 
 URL = os.getenv("RDV_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -30,11 +28,21 @@ def send_telegram(message):
 
 
 def check_slots():
+
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-dev-shm-usage"]
+        )
+
         page = browser.new_page()
 
-        page.goto(URL, wait_until="networkidle", timeout=60000)
+        page.goto(
+            URL,
+            wait_until="networkidle",
+            timeout=60000
+        )
 
         content = page.content()
 
@@ -47,24 +55,23 @@ def check_slots():
         return True
 
 
-print("Bot started")
-
 send_telegram("🟢 Palaiseau RDV Alarm aktif.")
 
+
 while True:
+
     try:
-        found = check_slots()
 
-        if found and not already_alerted:
-            send_telegram(
-                f"🚨 SLOT AÇILDI!\n{URL}"
-            )
-            already_alerted = True
+        available = check_slots()
 
-        elif not found:
+        if available:
+            if not already_alerted:
+                send_telegram("🚨 SLOT BULUNDU !!!")
+                already_alerted = True
+        else:
             already_alerted = False
 
     except Exception as e:
-        print(e)
+        send_telegram(f"❌ Hata: {e}")
 
-    time.sleep(random.randint(70, 110))
+    time.sleep(30)
