@@ -2,7 +2,9 @@ import os
 import time
 import random
 import requests
+import subprocess
 from playwright.sync_api import sync_playwright
+subprocess.run(["playwright", "install", "chromium"])
 
 URL = os.getenv("RDV_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
